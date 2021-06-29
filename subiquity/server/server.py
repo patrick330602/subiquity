@@ -29,14 +29,21 @@ from cloudinit.distros import ug_util
 
 import jsonschema
 
-from systemd import journal
+from subiquitycore.utils import is_wsl
+is_using_wsl = is_wsl()
+
+if not is_using_wsl:
+    from systemd import journal
 
 import yaml
 
 from subiquitycore.async_helpers import run_in_thread
 from subiquitycore.context import with_context
 from subiquitycore.core import Application
-from subiquitycore.prober import Prober
+
+if not is_using_wsl:
+    from subiquitycore.prober import Prober
+
 from subiquitycore.ssh import (
     host_key_fingerprints,
     user_key_fingerprints,
@@ -109,7 +116,7 @@ class MetaController:
                 controller.configured()
 
     async def client_variant_POST(self, variant: str) -> None:
-        if variant not in ('desktop', 'server'):
+        if variant not in ('desktop', 'server', 'wsl'):
             raise ValueError(f'unrecognized client variant {variant}')
         for controller in self.app.controllers.instances:
             if variant not in controller.relevant_variants:
@@ -200,6 +207,7 @@ class SubiquityServer(Application):
         "Updates",
         "Late",
         "Reboot",
+        "WSLConfiguration1",
         ]
 
     def make_model(self):
@@ -231,18 +239,19 @@ class SubiquityServer(Application):
             self.context.child("ErrorReporter"), self.opts.dry_run, self.root)
         self.prober = Prober(opts.machine_config, self.debug_flags)
         self.kernel_cmdline = shlex.split(opts.kernel_cmdline)
-        if opts.snaps_from_examples:
-            connection = FakeSnapdConnection(
-                os.path.join(
-                    os.path.dirname(
+        if not is_using_wsl:
+            if opts.snaps_from_examples:
+                connection = FakeSnapdConnection(
+                    os.path.join(
                         os.path.dirname(
-                            os.path.dirname(__file__))),
-                    "examples", "snaps"),
-                self.scale_factor)
-        else:
-            connection = SnapdConnection(self.root, self.snapd_socket_path)
-        self.snapd = AsyncSnapd(connection)
-        self.note_data_for_apport("SnapUpdated", str(self.updated))
+                            os.path.dirname(
+                                os.path.dirname(__file__))),
+                        "examples", "snaps"),
+                    self.scale_factor)
+            else:
+                connection = SnapdConnection(self.root, self.snapd_socket_path)
+            self.snapd = AsyncSnapd(connection)
+            self.note_data_for_apport("SnapUpdated", str(self.updated))
         self.event_listeners = []
         self.autoinstall_config = None
         self.hub.subscribe('network-up', self._network_change)
@@ -277,14 +286,15 @@ class SubiquityServer(Application):
             parent_id = str(context.parent.id)
         else:
             parent_id = ''
-        journal.send(
-            msg,
-            PRIORITY=context.level,
-            SYSLOG_IDENTIFIER=self.event_syslog_id,
-            SUBIQUITY_CONTEXT_NAME=context.full_name(),
-            SUBIQUITY_EVENT_TYPE=event_type,
-            SUBIQUITY_CONTEXT_ID=str(context.id),
-            SUBIQUITY_CONTEXT_PARENT_ID=parent_id)
+        if not is_using_wsl:
+            journal.send(
+                msg,
+                PRIORITY=context.level,
+                SYSLOG_IDENTIFIER=self.event_syslog_id,
+                SUBIQUITY_CONTEXT_NAME=context.full_name(),
+                SUBIQUITY_EVENT_TYPE=event_type,
+                SUBIQUITY_CONTEXT_ID=str(context.id),
+                SUBIQUITY_CONTEXT_PARENT_ID=parent_id)
 
     def report_start_event(self, context, description):
         for listener in self.event_listeners:
@@ -552,6 +562,10 @@ class SubiquityServer(Application):
 
     def restart(self):
         cmdline = ['snap', 'run', 'subiquity.subiquity-server']
+        if is_using_wsl:
+            cmdline = [
+                sys.executable, '-m', 'subiquity.cmd.server',
+                ]
         if self.opts.dry_run:
             cmdline = [
                 sys.executable, '-m', 'subiquity.cmd.server',
