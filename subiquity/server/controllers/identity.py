@@ -22,6 +22,7 @@ from subiquitycore.context import with_context
 from subiquity.common.apidef import API
 from subiquity.common.types import IdentityData
 from subiquity.server.controller import SubiquityController
+from subiquitycore.utils import is_wsl
 
 log = logging.getLogger('subiquity.server.controllers.identity')
 
@@ -39,16 +40,19 @@ class IdentityController(SubiquityController):
             'hostname': {'type': 'string'},
             'password': {'type': 'string'},
             },
-        'required': ['username', 'hostname', 'password'],
+        'required': ['username', 'password'],
         'additionalProperties': False,
         }
 
     def load_autoinstall_data(self, data):
         if data is not None:
+            __hostname = data['hostname']
+            if is_wsl():
+                __hostname = ""
             identity_data = IdentityData(
                 realname=data.get('realname', ''),
                 username=data['username'],
-                hostname=data['hostname'],
+                hostname=__hostname,
                 crypted_password=data['password'],
                 )
             self.model.add_user(identity_data)
