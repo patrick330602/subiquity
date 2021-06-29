@@ -24,7 +24,7 @@ from subiquity.server.controller import SubiquityController
 log = logging.getLogger('subiquity.server.controllers.wsl_integration_1')
 
 
-class WSLIntegration1Controller(SubiquityController):
+class WSLConfiguration1Controller(SubiquityController):
 
     endpoint = API.wslconf1
 
