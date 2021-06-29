@@ -19,6 +19,7 @@ import logging
 import os
 import random
 import subprocess
+import pathlib
 
 log = logging.getLogger("subiquitycore.utils")
 
@@ -32,6 +33,11 @@ def _clean_env(env):
     env['LC_ALL'] = 'C'
     # Maaaybe want to remove SNAP here too.
     return env
+
+
+def is_wsl():
+    # return true if it is WSL, otherwise return false
+    return pathlib.Path("/proc/sys/fs/binfmt_misc/WSLInterop").is_file()
 
 
 def run_command(cmd, *, input=None, stdout=subprocess.PIPE,
