@@ -28,7 +28,7 @@ class WSLConfiguration1Controller(SubiquityController):
 
     endpoint = API.wslconf1
 
-    autoinstall_key = model_name = "wsl_integration_1"
+    autoinstall_key = model_name = "wslconf1"
     autoinstall_schema = {
         'type': 'object',
         'properties': {

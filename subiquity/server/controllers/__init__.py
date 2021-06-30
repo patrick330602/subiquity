@@ -32,6 +32,7 @@ from .snaplist import SnapListController
 from .ssh import SSHController
 from .updates import UpdatesController
 from .userdata import UserdataController
+from .wsl_configuration_1 import WSLConfiguration1Controller
 from .zdev import ZdevController
 
 __all__ = [
@@ -56,5 +57,6 @@ __all__ = [
     'SSHController',
     'UpdatesController',
     'UserdataController',
+    'WSLConfiguration1Controller',
     'ZdevController',
 ]

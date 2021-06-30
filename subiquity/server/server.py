@@ -207,8 +207,28 @@ class SubiquityServer(Application):
         "Updates",
         "Late",
         "Reboot",
-        "WSLConfiguration1",
         ]
+    if is_using_wsl:
+        controllers = [
+            "Early",
+            "Reporting",
+            "Error",
+            "Userdata",
+            "Package",
+            "Debconf",
+            "Locale",
+            "Kernel",
+            "Keyboard",
+            "Mirror",
+            "Identity",
+            "SSH",
+            "Install",
+            "Updates",
+            "Late",
+            "Reboot",
+            "WSLConfiguration1",
+            ]
+
 
     def make_model(self):
         root = '/'
@@ -237,7 +257,8 @@ class SubiquityServer(Application):
 
         self.error_reporter = ErrorReporter(
             self.context.child("ErrorReporter"), self.opts.dry_run, self.root)
-        self.prober = Prober(opts.machine_config, self.debug_flags)
+        if not is_using_wsl:
+            self.prober = Prober(opts.machine_config, self.debug_flags)
         self.kernel_cmdline = shlex.split(opts.kernel_cmdline)
         if not is_using_wsl:
             if opts.snaps_from_examples:
@@ -252,6 +273,8 @@ class SubiquityServer(Application):
                 connection = SnapdConnection(self.root, self.snapd_socket_path)
             self.snapd = AsyncSnapd(connection)
             self.note_data_for_apport("SnapUpdated", str(self.updated))
+        else:
+            self.snapd = None
         self.event_listeners = []
         self.autoinstall_config = None
         self.hub.subscribe('network-up', self._network_change)
