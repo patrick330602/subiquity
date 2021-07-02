@@ -26,7 +26,7 @@ from curtin.commands.install import CONFIG_BUILTIN
 from curtin.config import merge_config
 
 from subiquitycore.file_util import write_file
-from subiquitycore.utils import run_command
+from subiquitycore.utils import run_command, is_wsl
 
 from .filesystem import FilesystemModel
 from .identity import IdentityModel
@@ -39,6 +39,7 @@ from .proxy import ProxyModel
 from .snaplist import SnapListModel
 from .ssh import SSHModel
 from .updates import UpdatesModel
+from .wsl_integration_1 import WSLConfiguration1nModel
 
 
 log = logging.getLogger('subiquity.models.subiquity')
@@ -89,6 +90,9 @@ POSTINSTALL_MODEL_NAMES = [
 
 ALL_MODEL_NAMES = INSTALL_MODEL_NAMES + POSTINSTALL_MODEL_NAMES
 
+if is_wsl():
+    ALL_MODEL_NAMES += ["wslconf1"]
+
 
 class DebconfSelectionsModel:
 
@@ -123,6 +127,9 @@ class SubiquityModel:
         self.ssh = SSHModel()
         self.updates = UpdatesModel()
         self.userdata = {}
+
+        if is_wsl():
+            self.wslconf1 = WSLConfiguration1nModel()
 
         self.confirmation = asyncio.Event()
 

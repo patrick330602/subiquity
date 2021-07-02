@@ -34,6 +34,8 @@ from subiquity.common.types import (
     KeyboardSetting,
     KeyboardSetup,
     IdentityData,
+    WSLConfiguration1Data,
+    WSLConfiguration2Data,
     NetworkStatus,
     RefreshStatus,
     SnapInfo,
@@ -53,6 +55,8 @@ class API:
     identity = simple_endpoint(IdentityData)
     locale = simple_endpoint(str)
     mirror = simple_endpoint(str)
+    wslconf1 = simple_endpoint(WSLConfiguration1Data)
+    wslconf2 = simple_endpoint(WSLConfiguration2Data)
     proxy = simple_endpoint(str)
     ssh = simple_endpoint(SSHData)
     updates = simple_endpoint(str)
